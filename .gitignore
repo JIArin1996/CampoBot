@@ -1,0 +1,38 @@
+# Variables de entorno — NUNCA subir al repo
+.env
+.env.local
+.env.production
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.pyc
+
+# Entornos virtuales
+venv/
+.venv/
+env/
+.env/
+
+# Distribución / empaquetado
+dist/
+build/
+*.egg-info/
+*.egg
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Archivos generados
+*.xlsx
+*.log
