@@ -3,13 +3,13 @@ import os
 import json
 import logging
 
-# --- ANTHROPIC (descomentar para volver) ---
-# import anthropic
+# --- ANTHROPIC (activo) ---
+import anthropic
 # --- FIN ANTHROPIC ---
 
-# --- GEMINI (activo) ---
-from google import genai
-from google.genai import types
+# --- GEMINI (descomentar para volver) ---
+# from google import genai
+# from google.genai import types
 # --- FIN GEMINI ---
 
 from dotenv import load_dotenv
@@ -170,17 +170,17 @@ Responde SOLO con JSON válido, sin texto adicional ni bloques de código:
 En "datos" incluí los valores que puedas extraer directamente del mensaje (cantidades, categorías, potreros, fechas, productos, montos, etc.)."""
 
 
-# --- ANTHROPIC (descomentar para volver) ---
-# _client = anthropic.AsyncAnthropic(api_key=os.getenv("ANTHROPIC_API_KEY"))
+# --- ANTHROPIC (activo) ---
+_client = anthropic.AsyncAnthropic(api_key=os.getenv("ANTHROPIC_API_KEY"))
 # --- FIN ANTHROPIC ---
 
-# --- GEMINI (activo) ---
-_gemini_key = os.getenv("GEMINI_API_KEY")
-logger.info(
-    "Inicializando cliente Gemini — key: %s",
-    f"{_gemini_key[:8]}...{_gemini_key[-4:]}" if _gemini_key else "NO ENCONTRADA",
-)
-_client = genai.Client(api_key=_gemini_key)
+# --- GEMINI (descomentar para volver) ---
+# _gemini_key = os.getenv("GEMINI_API_KEY")
+# logger.info(
+#     "Inicializando cliente Gemini — key: %s",
+#     f"{_gemini_key[:8]}...{_gemini_key[-4:]}" if _gemini_key else "NO ENCONTRADA",
+# )
+# _client = genai.Client(api_key=_gemini_key)
 # --- FIN GEMINI ---
 
 
@@ -194,63 +194,63 @@ def _limpiar_json(texto: str) -> str:
 
 
 async def clasificar_intencion(mensaje: str) -> dict:
-    """Clasifica la intención del mensaje usando Gemini."""
+    """Clasifica la intención del mensaje usando Anthropic."""
 
-    # --- ANTHROPIC (descomentar para volver) ---
-    # params = {
-    #     "model": "claude-haiku-4-5-20251001",
-    #     "max_tokens": 512,
-    #     "system_prompt_chars": len(SYSTEM_PROMPT),
-    #     "messages": [{"role": "user", "content": mensaje}],
-    # }
-    # logger.info("=== ANTHROPIC REQUEST ===\n%s", json.dumps(params, ensure_ascii=False, indent=2))
-    # try:
-    #     response = await _client.messages.create(
-    #         model="claude-haiku-4-5-20251001",
-    #         max_tokens=512,
-    #         system=SYSTEM_PROMPT,
-    #         messages=[{"role": "user", "content": mensaje}],
-    #     )
-    #     texto = response.content[0].text.strip()
-    #     logger.info("=== ANTHROPIC RESPONSE RAW ===\n%s", texto)
-    #     texto = _limpiar_json(texto)
-    #     return json.loads(texto)
-    # except json.JSONDecodeError as e:
-    #     logger.error("JSON inválido en respuesta: %s", e)
-    #     return {"intencion": "OTRO", "confianza": 0.0, "datos": {}, "error": f"JSON inválido: {e}"}
-    # except anthropic.APIStatusError as e:
-    #     logger.error("=== ANTHROPIC API ERROR ===\nstatus=%s\nmessage=%s\nbody=%s", e.status_code, e.message, e.body)
-    #     return {"intencion": "OTRO", "confianza": 0.0, "datos": {}, "error": f"Anthropic {e.status_code}: {e.message}"}
-    # except Exception as e:
-    #     logger.error("Error inesperado en clasificar_intencion: %s", e, exc_info=True)
-    #     return {"intencion": "OTRO", "confianza": 0.0, "datos": {}, "error": str(e)}
-    # --- FIN ANTHROPIC ---
-
-    # --- GEMINI (activo) ---
-    _GEMINI_MODEL = "gemini-2.5-flash"
-    _TIMEOUT = 10.0
-
-    logger.info("=== GEMINI REQUEST ===\nmodel=%s\nmensaje=%s", _GEMINI_MODEL, mensaje)
+    # --- ANTHROPIC (activo) ---
+    params = {
+        "model": "claude-haiku-4-5-20251001",
+        "max_tokens": 512,
+        "system_prompt_chars": len(SYSTEM_PROMPT),
+        "messages": [{"role": "user", "content": mensaje}],
+    }
+    logger.info("=== ANTHROPIC REQUEST ===\n%s", json.dumps(params, ensure_ascii=False, indent=2))
     try:
-        response = await asyncio.wait_for(
-            _client.aio.models.generate_content(
-                model=_GEMINI_MODEL,
-                contents=mensaje,
-                config=types.GenerateContentConfig(system_instruction=SYSTEM_PROMPT),
-            ),
-            timeout=_TIMEOUT,
+        response = await _client.messages.create(
+            model="claude-haiku-4-5-20251001",
+            max_tokens=512,
+            system=SYSTEM_PROMPT,
+            messages=[{"role": "user", "content": mensaje}],
         )
-        texto = response.text.strip()
-        logger.info("=== GEMINI RESPONSE RAW ===\n%s", texto)
+        texto = response.content[0].text.strip()
+        logger.info("=== ANTHROPIC RESPONSE RAW ===\n%s", texto)
         texto = _limpiar_json(texto)
         return json.loads(texto)
-    except asyncio.TimeoutError:
-        logger.error("Timeout (%ss) esperando respuesta de Gemini", _TIMEOUT)
-        return {"intencion": "OTRO", "confianza": 0.0, "datos": {}, "error": f"Timeout ({_TIMEOUT}s) — Gemini no respondió"}
     except json.JSONDecodeError as e:
-        logger.error("JSON inválido en respuesta Gemini: %s", e)
+        logger.error("JSON inválido en respuesta: %s", e)
         return {"intencion": "OTRO", "confianza": 0.0, "datos": {}, "error": f"JSON inválido: {e}"}
+    except anthropic.APIStatusError as e:
+        logger.error("=== ANTHROPIC API ERROR ===\nstatus=%s\nmessage=%s\nbody=%s", e.status_code, e.message, e.body)
+        return {"intencion": "OTRO", "confianza": 0.0, "datos": {}, "error": f"Anthropic {e.status_code}: {e.message}"}
     except Exception as e:
-        logger.error("Error en clasificar_intencion (Gemini): %s", e, exc_info=True)
-        return {"intencion": "OTRO", "confianza": 0.0, "datos": {}, "error": str(type(e).__name__ + ": " + str(e))}
+        logger.error("Error inesperado en clasificar_intencion: %s", e, exc_info=True)
+        return {"intencion": "OTRO", "confianza": 0.0, "datos": {}, "error": str(e)}
+    # --- FIN ANTHROPIC ---
+
+    # --- GEMINI (descomentar para volver) ---
+    # _GEMINI_MODEL = "gemini-2.5-flash"
+    # _TIMEOUT = 10.0
+    #
+    # logger.info("=== GEMINI REQUEST ===\nmodel=%s\nmensaje=%s", _GEMINI_MODEL, mensaje)
+    # try:
+    #     response = await asyncio.wait_for(
+    #         _client.aio.models.generate_content(
+    #             model=_GEMINI_MODEL,
+    #             contents=mensaje,
+    #             config=types.GenerateContentConfig(system_instruction=SYSTEM_PROMPT),
+    #         ),
+    #         timeout=_TIMEOUT,
+    #     )
+    #     texto = response.text.strip()
+    #     logger.info("=== GEMINI RESPONSE RAW ===\n%s", texto)
+    #     texto = _limpiar_json(texto)
+    #     return json.loads(texto)
+    # except asyncio.TimeoutError:
+    #     logger.error("Timeout (%ss) esperando respuesta de Gemini", _TIMEOUT)
+    #     return {"intencion": "OTRO", "confianza": 0.0, "datos": {}, "error": f"Timeout ({_TIMEOUT}s) — Gemini no respondió"}
+    # except json.JSONDecodeError as e:
+    #     logger.error("JSON inválido en respuesta Gemini: %s", e)
+    #     return {"intencion": "OTRO", "confianza": 0.0, "datos": {}, "error": f"JSON inválido: {e}"}
+    # except Exception as e:
+    #     logger.error("Error en clasificar_intencion (Gemini): %s", e, exc_info=True)
+    #     return {"intencion": "OTRO", "confianza": 0.0, "datos": {}, "error": str(type(e).__name__ + ": " + str(e))}
     # --- FIN GEMINI ---

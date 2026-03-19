@@ -2,24 +2,24 @@ import asyncio
 import os
 import json
 
-# --- ANTHROPIC (descomentar para volver) ---
-# import anthropic
+# --- ANTHROPIC (activo) ---
+import anthropic
 # --- FIN ANTHROPIC ---
 
-# --- GEMINI (activo) ---
-from google import genai
+# --- GEMINI (descomentar para volver) ---
+# from google import genai
 # --- FIN GEMINI ---
 
 from dotenv import load_dotenv
 
 load_dotenv()
 
-# --- ANTHROPIC (descomentar para volver) ---
-# _client = anthropic.AsyncAnthropic(api_key=os.getenv("ANTHROPIC_API_KEY"))
+# --- ANTHROPIC (activo) ---
+_client = anthropic.AsyncAnthropic(api_key=os.getenv("ANTHROPIC_API_KEY"))
 # --- FIN ANTHROPIC ---
 
-# --- GEMINI (activo) ---
-_client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
+# --- GEMINI (descomentar para volver) ---
+# _client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
 # --- FIN GEMINI ---
 
 
@@ -46,24 +46,24 @@ Responde SOLO con JSON:
 Si no hay fecha explícita, asumí hoy. Si hay "anoche" o "ayer", usá la fecha de ayer.
 Si no hay mm claro, usa null."""
 
-    # --- ANTHROPIC (descomentar para volver) ---
-    # response = await _client.messages.create(
-    #     model="claude-haiku-4-5-20251001",
-    #     max_tokens=256,
-    #     messages=[{"role": "user", "content": prompt}],
-    # )
-    # texto = response.content[0].text.strip()
+    # --- ANTHROPIC (activo) ---
+    response = await _client.messages.create(
+        model="claude-haiku-4-5-20251001",
+        max_tokens=256,
+        messages=[{"role": "user", "content": prompt}],
+    )
+    texto = response.content[0].text.strip()
     # --- FIN ANTHROPIC ---
 
-    # --- GEMINI (activo) ---
-    response = await asyncio.wait_for(
-        _client.aio.models.generate_content(
-            model="gemini-2.5-flash",
-            contents=prompt,
-        ),
-        timeout=10.0,
-    )
-    texto = response.text.strip()
+    # --- GEMINI (descomentar para volver) ---
+    # response = await asyncio.wait_for(
+    #     _client.aio.models.generate_content(
+    #         model="gemini-2.5-flash",
+    #         contents=prompt,
+    #     ),
+    #     timeout=10.0,
+    # )
+    # texto = response.text.strip()
     # --- FIN GEMINI ---
 
     return json.loads(_limpiar_json(texto))
@@ -92,24 +92,24 @@ Responde SOLO con JSON:
 
 Usa null para campos que no se mencionan. Para categoria usa: vaquillona, novillo, vaca, toro, ternero, novillo gordo."""
 
-    # --- ANTHROPIC (descomentar para volver) ---
-    # response = await _client.messages.create(
-    #     model="claude-haiku-4-5-20251001",
-    #     max_tokens=512,
-    #     messages=[{"role": "user", "content": prompt}],
-    # )
-    # texto = response.content[0].text.strip()
+    # --- ANTHROPIC (activo) ---
+    response = await _client.messages.create(
+        model="claude-haiku-4-5-20251001",
+        max_tokens=512,
+        messages=[{"role": "user", "content": prompt}],
+    )
+    texto = response.content[0].text.strip()
     # --- FIN ANTHROPIC ---
 
-    # --- GEMINI (activo) ---
-    response = await asyncio.wait_for(
-        _client.aio.models.generate_content(
-            model="gemini-2.5-flash",
-            contents=prompt,
-        ),
-        timeout=10.0,
-    )
-    texto = response.text.strip()
+    # --- GEMINI (descomentar para volver) ---
+    # response = await asyncio.wait_for(
+    #     _client.aio.models.generate_content(
+    #         model="gemini-2.5-flash",
+    #         contents=prompt,
+    #     ),
+    #     timeout=10.0,
+    # )
+    # texto = response.text.strip()
     # --- FIN GEMINI ---
 
     return json.loads(_limpiar_json(texto))
@@ -139,24 +139,24 @@ Responde SOLO con JSON:
 Para tipo usa: dosificacion, vacuna, tratamiento.
 Usa null para campos no mencionados."""
 
-    # --- ANTHROPIC (descomentar para volver) ---
-    # response = await _client.messages.create(
-    #     model="claude-haiku-4-5-20251001",
-    #     max_tokens=512,
-    #     messages=[{"role": "user", "content": prompt}],
-    # )
-    # texto = response.content[0].text.strip()
+    # --- ANTHROPIC (activo) ---
+    response = await _client.messages.create(
+        model="claude-haiku-4-5-20251001",
+        max_tokens=512,
+        messages=[{"role": "user", "content": prompt}],
+    )
+    texto = response.content[0].text.strip()
     # --- FIN ANTHROPIC ---
 
-    # --- GEMINI (activo) ---
-    response = await asyncio.wait_for(
-        _client.aio.models.generate_content(
-            model="gemini-2.5-flash",
-            contents=prompt,
-        ),
-        timeout=10.0,
-    )
-    texto = response.text.strip()
+    # --- GEMINI (descomentar para volver) ---
+    # response = await asyncio.wait_for(
+    #     _client.aio.models.generate_content(
+    #         model="gemini-2.5-flash",
+    #         contents=prompt,
+    #     ),
+    #     timeout=10.0,
+    # )
+    # texto = response.text.strip()
     # --- FIN GEMINI ---
 
     return json.loads(_limpiar_json(texto))
@@ -186,24 +186,24 @@ Para tipo usa: ingreso, egreso.
 Para categoria usa: venta_hacienda, sanidad, semilla, labor, combustible, otro.
 Usa null para campos no mencionados."""
 
-    # --- ANTHROPIC (descomentar para volver) ---
-    # response = await _client.messages.create(
-    #     model="claude-haiku-4-5-20251001",
-    #     max_tokens=512,
-    #     messages=[{"role": "user", "content": prompt}],
-    # )
-    # texto = response.content[0].text.strip()
+    # --- ANTHROPIC (activo) ---
+    response = await _client.messages.create(
+        model="claude-haiku-4-5-20251001",
+        max_tokens=512,
+        messages=[{"role": "user", "content": prompt}],
+    )
+    texto = response.content[0].text.strip()
     # --- FIN ANTHROPIC ---
 
-    # --- GEMINI (activo) ---
-    response = await asyncio.wait_for(
-        _client.aio.models.generate_content(
-            model="gemini-2.5-flash",
-            contents=prompt,
-        ),
-        timeout=10.0,
-    )
-    texto = response.text.strip()
+    # --- GEMINI (descomentar para volver) ---
+    # response = await asyncio.wait_for(
+    #     _client.aio.models.generate_content(
+    #         model="gemini-2.5-flash",
+    #         contents=prompt,
+    #     ),
+    #     timeout=10.0,
+    # )
+    # texto = response.text.strip()
     # --- FIN GEMINI ---
 
     return json.loads(_limpiar_json(texto))

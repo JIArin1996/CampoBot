@@ -3,26 +3,26 @@ import os
 import json
 import httpx
 
-# --- ANTHROPIC (descomentar para volver) ---
-# import base64
-# import anthropic
+# --- ANTHROPIC (activo) ---
+import base64
+import anthropic
 # --- FIN ANTHROPIC ---
 
-# --- GEMINI (activo) ---
-from google import genai
-from google.genai import types
+# --- GEMINI (descomentar para volver) ---
+# from google import genai
+# from google.genai import types
 # --- FIN GEMINI ---
 
 from dotenv import load_dotenv
 
 load_dotenv()
 
-# --- ANTHROPIC (descomentar para volver) ---
-# _client = anthropic.AsyncAnthropic(api_key=os.getenv("ANTHROPIC_API_KEY"))
+# --- ANTHROPIC (activo) ---
+_client = anthropic.AsyncAnthropic(api_key=os.getenv("ANTHROPIC_API_KEY"))
 # --- FIN ANTHROPIC ---
 
-# --- GEMINI (activo) ---
-_client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
+# --- GEMINI (descomentar para volver) ---
+# _client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
 # --- FIN GEMINI ---
 
 PROMPT_IMAGEN = """Analiza esta imagen que puede ser una guía de traslado, factura, remito o foto de caravanas.
@@ -66,41 +66,41 @@ async def analizar_imagen_url(image_url: str, token: str) -> dict:
         image_bytes = response.content
         media_type = response.headers.get("content-type", "image/jpeg")
 
-    # --- ANTHROPIC (descomentar para volver) ---
-    # image_data = base64.standard_b64encode(image_bytes).decode("utf-8")
-    # result = await _client.messages.create(
-    #     model="claude-sonnet-4-6",
-    #     max_tokens=1024,
-    #     messages=[
-    #         {
-    #             "role": "user",
-    #             "content": [
-    #                 {
-    #                     "type": "image",
-    #                     "source": {
-    #                         "type": "base64",
-    #                         "media_type": media_type,
-    #                         "data": image_data,
-    #                     },
-    #                 },
-    #                 {"type": "text", "text": PROMPT_IMAGEN},
-    #             ],
-    #         }
-    #     ],
-    # )
-    # texto = result.content[0].text.strip()
+    # --- ANTHROPIC (activo) ---
+    image_data = base64.standard_b64encode(image_bytes).decode("utf-8")
+    result = await _client.messages.create(
+        model="claude-sonnet-4-6",
+        max_tokens=1024,
+        messages=[
+            {
+                "role": "user",
+                "content": [
+                    {
+                        "type": "image",
+                        "source": {
+                            "type": "base64",
+                            "media_type": media_type,
+                            "data": image_data,
+                        },
+                    },
+                    {"type": "text", "text": PROMPT_IMAGEN},
+                ],
+            }
+        ],
+    )
+    texto = result.content[0].text.strip()
     # --- FIN ANTHROPIC ---
 
-    # --- GEMINI (activo) ---
-    image_part = types.Part.from_bytes(data=image_bytes, mime_type=media_type)
-    result = await asyncio.wait_for(
-        _client.aio.models.generate_content(
-            model="gemini-2.5-flash",
-            contents=[image_part, PROMPT_IMAGEN],
-        ),
-        timeout=20.0,
-    )
-    texto = result.text.strip()
+    # --- GEMINI (descomentar para volver) ---
+    # image_part = types.Part.from_bytes(data=image_bytes, mime_type=media_type)
+    # result = await asyncio.wait_for(
+    #     _client.aio.models.generate_content(
+    #         model="gemini-2.5-flash",
+    #         contents=[image_part, PROMPT_IMAGEN],
+    #     ),
+    #     timeout=20.0,
+    # )
+    # texto = result.text.strip()
     # --- FIN GEMINI ---
 
     return json.loads(_limpiar_json(texto))
