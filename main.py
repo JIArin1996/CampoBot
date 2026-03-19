@@ -3,6 +3,7 @@
 import os
 import logging
 from contextlib import asynccontextmanager
+from datetime import date
 from fastapi import FastAPI
 from pydantic import BaseModel
 
@@ -12,6 +13,7 @@ from webhook import router as webhook_router, enviar_mensaje
 from notifications.scheduler import iniciar_scheduler, detener_scheduler
 from ai.intent import clasificar_intencion
 from ai import extractor
+from db import supabase_client as db
 
 load_dotenv()
 
@@ -93,7 +95,7 @@ _EJEMPLOS = {
 async def test_mensaje(body: MensajeInput):
     """
     Clasifica la intención del mensaje y extrae sus datos estructurados.
-    Útil para probar la IA sin pasar por WhatsApp.
+    Si la intención es REGISTRO_LLUVIA, guarda en Supabase.
     """
     clasificacion = await clasificar_intencion(body.mensaje)
     intencion = clasificacion.get("intencion", "OTRO")
@@ -107,12 +109,39 @@ async def test_mensaje(body: MensajeInput):
         datos = _EJEMPLOS.get(intencion, {})
         datos["_nota"] = "extractor no implementado aún — datos de ejemplo"
 
-    return {
+    # --- Guardar en DB según intención ---
+    guardado = None
+    guardado_error = None
+
+    if intencion == "REGISTRO_LLUVIA":
+        mm = datos.get("mm")
+        if mm is None:
+            guardado = False
+            guardado_error = "No se pudo extraer la cantidad de mm"
+        else:
+            registro = {
+                "fecha": datos.get("fecha") or date.today().isoformat(),
+                "mm": float(mm),
+                "observaciones": datos.get("observaciones"),
+            }
+            try:
+                resultado = await db.insertar("lluvias", registro)
+                guardado = True
+                datos["_db"] = resultado
+            except Exception as e:
+                guardado = False
+                guardado_error = str(e)
+
+    respuesta = {
         "intencion": intencion,
         "confianza": confianza,
         "datos": datos,
         "datos_clasificador": datos_ia,
+        "guardado": guardado,
     }
+    if guardado_error:
+        respuesta["guardado_error"] = guardado_error
+    return respuesta
 
 
 if __name__ == "__main__":
