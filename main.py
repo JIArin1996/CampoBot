@@ -4,10 +4,14 @@ import os
 import logging
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
+from pydantic import BaseModel
+
 from dotenv import load_dotenv
 
 from webhook import router as webhook_router, enviar_mensaje
 from notifications.scheduler import iniciar_scheduler, detener_scheduler
+from ai.intent import clasificar_intencion
+from ai import extractor
 
 load_dotenv()
 
@@ -51,6 +55,64 @@ async def raiz():
 @app.get("/health")
 async def health():
     return {"status": "ok"}
+
+
+# --- Endpoint de prueba ---
+
+class MensajeInput(BaseModel):
+    mensaje: str
+
+
+# Extractores implementados por intención
+_EXTRACTORES = {
+    "REGISTRO_LLUVIA":    extractor.extraer_datos_lluvia,
+    "CONSULTA_LLUVIA":    extractor.extraer_datos_lluvia,
+    "INGRESO_HACIENDA":   extractor.extraer_datos_hacienda,
+    "BAJA_HACIENDA":      extractor.extraer_datos_hacienda,
+    "TRANSFERENCIA_HACIENDA": extractor.extraer_datos_hacienda,
+    "CONSULTA_HACIENDA":  extractor.extraer_datos_hacienda,
+    "REGISTRO_SANIDAD":   extractor.extraer_datos_sanidad,
+    "PROGRAMAR_SANIDAD":  extractor.extraer_datos_sanidad,
+    "CONSULTA_SANIDAD":   extractor.extraer_datos_sanidad,
+    "REGISTRO_ECONOMIA":  extractor.extraer_datos_economia,
+}
+
+# Datos de ejemplo para intenciones sin extractor dedicado
+_EJEMPLOS = {
+    "REPORTE":         {"periodo": "mes_actual", "tipo": "resumen"},
+    "GESTION_USUARIO": {"accion": "alta", "telefono": None, "rol": None},
+    "REGISTRO_CHACRA": {"nombre": None, "cultivo": None, "superficie_has": None, "fecha_siembra": None},
+    "AYUDA":           {"modulo": None},
+    "CANCELAR":        {},
+    "DESHACER":        {},
+    "OTRO":            {},
+}
+
+
+@app.post("/test")
+async def test_mensaje(body: MensajeInput):
+    """
+    Clasifica la intención del mensaje y extrae sus datos estructurados.
+    Útil para probar la IA sin pasar por WhatsApp.
+    """
+    clasificacion = await clasificar_intencion(body.mensaje)
+    intencion = clasificacion.get("intencion", "OTRO")
+    confianza = clasificacion.get("confianza", 0.0)
+    datos_ia = clasificacion.get("datos", {})
+
+    extractor_fn = _EXTRACTORES.get(intencion)
+    if extractor_fn:
+        datos = await extractor_fn(body.mensaje)
+    else:
+        datos = _EJEMPLOS.get(intencion, {})
+        datos["_nota"] = "extractor no implementado aún — datos de ejemplo"
+
+    return {
+        "intencion": intencion,
+        "confianza": confianza,
+        "datos": datos,
+        "datos_clasificador": datos_ia,
+    }
 
 
 if __name__ == "__main__":
